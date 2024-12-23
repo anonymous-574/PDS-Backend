@@ -24,8 +24,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     #empty path so that something comes when i test
-    #path('', InputView_Text.as_view(), name='Text'),
-    path('',user_signup.as_view(), name='signup'),
+    # path('', InputView_Text.as_view(), name='Text'),
+    # path('',user_signup.as_view(), name='signup'),
     #path('',user_login.as_view(), name='login'),
 
 
