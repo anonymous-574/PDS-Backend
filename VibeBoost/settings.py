@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-5y-yg&9eq9b#w0ok)2s%3a#w51dptdz*k#lqhz0li@212@^t#(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['https://vibeboost.onrender.com']
+ALLOWED_HOSTS = ['https://vibeboost.onrender.com','https://console.cron-job.org/']
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,7 +61,7 @@ REST_FRAMEWORK= {'DEFAULT_PERMISSION_CLASSES':[
 CORS_ORIGIN_ALLOW_ALL=False
 
 CORS_ALLOWED_ORIGINS = [
-    "https://vibe-boost.vercel.app/",
+    "https://vibe-boost.vercel.app/","https://console.cron-job.org/",
 ]
 
 ROOT_URLCONF = 'VibeBoost.urls'
