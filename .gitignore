@@ -1,4 +1,5 @@
 /env
 venv/
+myenv/
 /media
 db.sqlite3
