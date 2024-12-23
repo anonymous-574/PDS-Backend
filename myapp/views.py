@@ -16,6 +16,13 @@ import os
 import torch
 from transformers import BertForSequenceClassification, BertTokenizer
 
+
+class default(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self,request):
+        return Response({"message": "Working"}, status=status.HTTP_200_OK)
+    
 class user_login(APIView):
     permission_classes = [AllowAny]
 
