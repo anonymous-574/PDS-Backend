@@ -27,8 +27,7 @@ VibeBoost-Backend/
 │   ├── views.py          # API views  
 │   ├── urls.py           # App-specific URLs  
 │   ├── serializers.py    # Data serialization  
-│   └── apps.py           # App configuration  
-├── ml-model/             # Pretrained BERT model files  
+│   └── apps.py           # App configuration   
 └── README.md             # Documentation
 ```
 ## 📖 How to Run the Backend
