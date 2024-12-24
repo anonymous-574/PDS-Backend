@@ -51,6 +51,8 @@ VibeBoost-Backend/
    python manage.py runserver
    ```
 5. Access the API at **http://127.0.0.1:8000/**.
-
+## 📂 ML Model Files
+The pretrained BERT-based model files required for emotion detection can be downloaded from the following link:
+- [Emotion Detection Model](https://drive.google.com/drive/folders/17b0f3rmlguwcs95_Gw3nWqUg-1hfxSS-?usp=sharing).
   
 
