@@ -16,6 +16,10 @@ import os
 import torch
 from transformers import BertForSequenceClassification, BertTokenizer
 
+import os
+import tempfile
+import gdown
+from transformers import BertForSequenceClassification, BertTokenizer
 
 class default(APIView):
     permission_classes = [AllowAny]
@@ -63,10 +67,29 @@ class user_signup(APIView):
         return Response({"message": "Registration successful."}, status=status.HTTP_201_CREATED)
 
 
-import os
-import tempfile
-import gdown
-from transformers import BertForSequenceClassification, BertTokenizer
+
+
+
+# Function to extract file ID from Google Drive link
+def extract_file_id(file_link):
+    """Extract the file ID from a Google Drive file link."""
+    if "drive.google.com" in file_link:
+        return file_link.split("/d/")[1].split("/")[0]
+    raise ValueError("Invalid Google Drive file link.")
+
+# Function to download a file to a temporary directory
+def download_file_to_temp(file_url, temp_dir, filename):
+    """Download a file from Google Drive into a temporary directory."""
+    try:
+        file_id = extract_file_id(file_url)
+        download_url = f"https://drive.google.com/uc?id={file_id}"
+        output_path = os.path.join(temp_dir, filename)  # Save file with the correct name
+        gdown.download(download_url, output_path, quiet=False)
+        print(f"Downloaded: {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+        return None
 
 # Google Drive file links
 file_links = {
@@ -77,78 +100,63 @@ file_links = {
     "special_tokens_map.json": "https://drive.google.com/file/d/14NaUBLsDxxjWiRwNN6Dtz1HKlghjilY0/view?usp=sharing",
 }
 
-def extract_file_id(file_link):
-    """Extract the file ID from a Google Drive file link."""
-    if "drive.google.com" in file_link:
-        return file_link.split("/d/")[1].split("/")[0]
-    raise ValueError("Invalid Google Drive file link.")
-
-def download_file_to_temp(file_url, temp_dir, filename):
-    """Download a file from Google Drive into a temporary directory."""
-    try:
-        file_id = extract_file_id(file_url)
-        download_url = f"https://drive.google.com/uc?id={file_id}"
-        
-        output_path = os.path.join(temp_dir, filename)  # Save file with the correct name
-        gdown.download(download_url, output_path, quiet=False)
-
-        print(f"Downloaded: {output_path}")
-        return output_path
-    except Exception as e:
-        print(f"Error downloading file: {e}")
-        return None
-
-try:
-    # Create a temporary directory in memory
-    with tempfile.TemporaryDirectory() as temp_dir:
-        print(f"Temporary directory created at {temp_dir}")
-
-        # Download all files to the temporary directory
-        for filename, file_url in file_links.items():
-            download_file_to_temp(file_url, temp_dir, filename)
-
-        # List all downloaded files to verify
-        print("Downloaded files:")
-        for file_name in os.listdir(temp_dir):
-            print(file_name)
-
-        # Load the model and tokenizer from the temporary directory
-        model = BertForSequenceClassification.from_pretrained(temp_dir)
-        tokenizer = BertTokenizer.from_pretrained(temp_dir)
-        model.eval()
-        print("Success in loading model")
-
-except Exception as e:
-    print(f"Error: {e}")
-
-
-
-def predict_emotion_text(text):
-    inputs = tokenizer(text, padding="max_length", truncation=True, max_length=128, return_tensors="pt")  
-    with torch.no_grad():
-        outputs = model(**inputs)  
-    logits = outputs.logits  
-    predicted_class = torch.argmax(logits, dim=1).item()    
-    labels = ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise'] 
-    predicted_label = labels[predicted_class]
-    return predicted_label
-
 class InputView_Text(APIView):
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
-    def get(self,request):
-        #texts = Input.objects.values_list('text', flat=True)
+    # permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
-        if not request.user.is_authenticated:
-            return Response({"error": "User is not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
+    def get(self, request):
+        # if not request.user.is_authenticated:
+        #     return Response({"error": "User is not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        #give the latest text for currently logged in user
-        #if user has many texts then give the latest one
-        texts = Input_text.objects.filter(user=request.user).order_by('-id').values_list('text', flat=True).first()        
-        if texts is None:
-            return Response({"error": "No text available in database."}, status=status.HTTP_404_NOT_FOUND)
-        emotion=predict_emotion_text(texts)
-        output={'emotion' : emotion}
-        return Response(output)
+        try:
+            # Create a temporary directory
+            with tempfile.TemporaryDirectory() as temp_dir:
+                print(f"Temporary directory created at {temp_dir}")
+
+                # Download all files to the temporary directory
+                for filename, file_url in file_links.items():
+                    download_file_to_temp(file_url, temp_dir, filename)
+
+                # Verify downloaded files
+                print("Downloaded files:")
+                for file_name in os.listdir(temp_dir):
+                    print(file_name)
+
+                # Load the model and tokenizer from the temporary directory
+                model_path = os.path.join(temp_dir, "model.safetensors")
+                if not os.path.exists(model_path):
+                    raise FileNotFoundError("Model file not found in temporary directory.")
+
+                model = BertForSequenceClassification.from_pretrained(temp_dir, local_files_only=True)
+                tokenizer = BertTokenizer.from_pretrained(temp_dir, local_files_only=True)
+
+                model.eval()
+                print("Successfully loaded model and tokenizer.")
+
+                # Retrieve the latest text for the current user
+                texts = Input_text.objects.order_by('-id').values_list('text', flat=True).first()
+                if texts is None:
+                    return Response({"error": "No text available in the database."}, status=status.HTTP_404_NOT_FOUND)
+
+                # Tokenize the input text
+                inputs = tokenizer(texts, padding="max_length", truncation=True, max_length=128, return_tensors="pt")
+
+                # Perform inference
+                with torch.no_grad():
+                    outputs = model(**inputs)
+
+                logits = outputs.logits
+                predicted_class = torch.argmax(logits, dim=1).item()
+
+                # Map predicted class to emotion label
+                labels = ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
+                emotion = labels[predicted_class]
+
+                output = {'emotion': emotion}
+                return Response(output)
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({"error": "Error loading model or processing text."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self,request):
         if not request.user.is_authenticated:

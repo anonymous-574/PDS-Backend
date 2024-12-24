@@ -63,9 +63,7 @@ REST_FRAMEWORK= {'DEFAULT_PERMISSION_CLASSES':[
 CORS_ORIGIN_ALLOW_ALL=False
 
 
-CORS_ALLOWED_ORIGINS = [
-    "https://vibe-boost.vercel.app/","https://console.cron-job.org/",
-]
+CORS_ALLOWED_ORIGINS = ["https://vibe-boost.vercel.app/","https://console.cron-job.org/",]
 
 
 
