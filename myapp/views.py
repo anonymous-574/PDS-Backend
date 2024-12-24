@@ -101,11 +101,11 @@ file_links = {
 }
 
 class InputView_Text(APIView):
-    # permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
     def get(self, request):
-        # if not request.user.is_authenticated:
-        #     return Response({"error": "User is not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.is_authenticated:
+            return Response({"error": "User is not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
             # Create a temporary directory
